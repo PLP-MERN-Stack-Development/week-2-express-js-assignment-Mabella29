@@ -135,6 +135,59 @@ app.get('/api/products', (req, res) => {
 app.use(validationProductCreation)
 // - Error handling
 
+
+//Advanced 
+// 🔍 Search by name
+app.get('/api/products/search', (req, res) => {
+  const { name } = req.query;
+  if (!name) return res.status(400).json({ message: 'Please provide a name to search' });
+
+  const result = products.filter(p =>
+    p.name.toLowerCase().includes(name.toLowerCase())
+  );
+  res.status(200).json(result);
+});
+
+// Filter + Pagination
+app.get('/api/products', (req, res) => {
+  let { category, page = 1, limit = 10 } = req.query;
+  page = parseInt(page);
+  limit = parseInt(limit);
+
+  let filtered = products;
+
+  if (category) {
+    filtered = filtered.filter(p => p.category.toLowerCase() === category.toLowerCase());
+  }
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const paginated = filtered.slice(startIndex, endIndex);
+
+  res.status(200).json({
+    total: filtered.length,
+    page,
+    limit,
+    data: paginated,
+  });
+});
+
+
+app.get('/api/products/stats', (req, res) => {
+  const stats = {};
+
+  products.forEach(p => {
+    if (stats[p.category]) {
+      stats[p.category]++;
+    } else {
+      stats[p.category] = 1;
+    }
+  });
+
+  res.status(200).json({ stats });
+});
+
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
